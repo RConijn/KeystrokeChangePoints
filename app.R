@@ -13,12 +13,12 @@ models = c("1", "2", "3", "4", "5", "123", "12345")
 log_filt2 <- read_csv("input/log_filt2.csv", show_col_types = FALSE)
 
 # load author names
-source("initialize.R")
+source("initialize_anom.R")
 
 # Define UI for the application
 ui <- 
   shinyUI(
-    navbarPage(title = "Change point Detection",
+    navbarPage(title = "Change Point Detection",
                header = tags$head(
                  tags$meta(name="author", content=author),
                  tags$meta(name="creation_date", content=Sys.Date())
@@ -65,7 +65,8 @@ ui <-
                                      "Mean difference change point (sec)" =
                                        "mean_diff",
                                      "Median difference change point (sec)" =
-                                       "median_diff")),
+                                       "median_diff",
+                                     "Mean adjusted R2 (Note: not available for multivariate models)" = "mean_adjr2")),
                       selectInput("model2", "Annotation rule:",
                                   choices = models,  selected = models,
                                   multiple = T),
@@ -96,9 +97,9 @@ ui <-
                   p(HTML(paste("By", "<strong>", author, "</strong>", " ~ ", 
                                "<strong>", Sys.Date(), "</strong>"))),
                   p("This app can be used to detect change points in keystroke log data."),
-                  p("For more details see Authors (under review). Phase to Phase: 
+                  p(paste("For more details see", authors, "(under review). Phase to Phase: 
                     Towards an Automated Procedure to Identify Phases in 
-                    Writing Processes Using Keystroke Data."))
+                    Writing Processes Using Keystroke Data.")))
                   )
                )
     )
@@ -108,11 +109,6 @@ ui <-
 
 # Define server logic
 server <- function(input, output, session) {
-
-  
-  output$summary <- renderText({ 
-    "This is some extra text"
-  })
     
   output$plot <- renderPlot( { 
     subsetsessions <-  as.numeric(unlist(strsplit(input$participant,",")))

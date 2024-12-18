@@ -15,10 +15,10 @@ log_time_10sec <- read_csv("app/input/log_time_10sec.csv")
 # test for one ppt (use for debugging)
 
 log_segm2 <- log_time_10sec %>%
-  filter(session_id == 63) %>%
+  filter(session_id == 1) %>%
   # with trimming of 10 %
   # (don't include the first 10% of the writing phase in cp detection)
-  filter(as.numeric(startClock2) >= (maxend/1000)*.1) %>%
+  #filter(as.numeric(startClock2) >= (maxend/1000)*.1) %>%
   ungroup() 
 
 out = beast(log_segm2$perc_doclength, 
@@ -29,7 +29,7 @@ out = beast(log_segm2$perc_doclength,
             mcmc.seed = 42,
             ci = F) # symmetric credible interval suffices
 
-vars = c("perc_doclength", "dist_process_prod", "rel_position",
+out$Rvars = c("perc_doclength", "dist_process_prod", "rel_position",
          "source_use","m_pause_length")
 
 outmv = log_segm2 %>% select(all_of(vars)) %>%
@@ -49,6 +49,12 @@ plot(out, vars  = c('y','t','tcp','error'))
 ###############################################################################
 # load function
 source("app/scripts/estimate_changepoints_function.R")
+
+# try one usecase:
+out_df <- estimate_cp(log_segm2, sessionid = 1,
+                    "perc_doclength", maxcp = 10, 
+                    timeinterval = 10,
+                    trim = 0)
 
 vars = c("perc_doclength", "dist_process_prod", "rel_position",
          "source_use","m_pause_length")
@@ -496,7 +502,6 @@ beast_4 <- write_cp_to_file(vars = c("perc_doclength",  "dist_process_prod", "re
 beast_5 <- write_cp_to_file(vars = c("perc_doclength",  "dist_process_prod", "rel_position", "source_use", "m_pause_length" ), 
                             maxcp = 1, timeinterval = 5, trim = 10)
 
-###FROM HERE
 # run changepoint detection without trim, 5sec
 beast_1 <- write_cp_to_file(vars = c("perc_doclength",  "dist_process_prod", "rel_position", "source_use", "m_pause_length" ), 
                             maxcp = 3, timeinterval = 5, trim = 0)

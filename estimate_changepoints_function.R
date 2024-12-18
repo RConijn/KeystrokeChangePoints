@@ -53,17 +53,21 @@ estimate_cp <- function(dataset, sessionid, vars, maxcp = 10, timeinterval = 1,
       cp_loc = out$trend$cp,
       cp_pos = (out$trend$cp - starttime)/timeinterval,
       cp_change_abrupt = out$trend$cpAbruptChange,
-      cp_nof = out$trend$ncp,
+      cp_nof_mean = out$trend$ncp,
+      cp_nof_prob = which(out$trend$ncpPr %in% max(out$trend$ncpPr))-1,
       cp_nof_median = out$trend$ncp_median,
       R2 = out$R2,
-      RMSE = out$RMSE
+      RMSE = out$RMSE,
+      mlik = out$marg_lik
       ) %>%
       arrange(cp_loc)
     if(length(vars) == 1){
       output2 <- output2  %>%
         # estimated slopes only available if 1 variable included
+        arrange(desc(cp_prob)) %>%
+        # only keep nof changepoints related to highest probability
+        slice(1:max(cp_nof_prob)) %>%
         rowwise() %>%
-        filter(cp_prob > 0.01) %>%
         mutate(
           slope_before = ifelse(!is.na(cp_pos), 
                                 mean(out$trend$slp[0:cp_pos]), NA),

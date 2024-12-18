@@ -46,11 +46,12 @@ distance_from_cp <- function(model, maxcp = 10, timeinterval = 1,
     summarize(
       rev_start = ifelse(sum(rev_start, na.rm = T) > 0,
                          first(startClock2[rev_start == 1]), NA),
-      max_end = as.numeric(last(startClock2))) %>%
+      max_end = as.numeric(last(startClock2)),
+      n = n()) %>%
     mutate(
       rev_present = as.numeric(!is.na(rev_start))
     )
-  
+
   # check how much overlap
   beast_check <- estimate_cp %>% 
     arrange(session_id, cp_loc) %>%
@@ -64,24 +65,11 @@ distance_from_cp <- function(model, maxcp = 10, timeinterval = 1,
     group_by(session_id) %>%
     slice(which.min(abs(diff))) %>%
     group_by(pre_proc = "time", timeinterval = timeinterval, trim = trim,
-             model = model, maxcp = maxcp) %>%
-    summarize(
-      rev_present = sum(rev_present == 1, na.rm = T),
-      correct_cp = sum(correct_cp, na.rm = T),
-      close_cp = sum(close_cp, na.rm = T),
-      cp_in_ci = sum(cp_in_ci, na.rm = T),
-      median_diff = median(diff, na.rm = T),
-      mean_diff = mean(diff, na.rm = T),
-      sd_diff = sd(diff, na.rm = T),
-      mean_r2 = mean(R2, na.rm = T),
-      sd_r2 = sd(R2,na.rm = T),
-      mean_rmse = mean(RMSE, na.rm = T),
-      sd_rmse = sd(RMSE,na.rm = T)
-   ) 
+             model = model, maxcp = maxcp) 
 }
 
 # run for 1 example
-lr2 <- distance_from_cp(model = 1, maxcp = 10, timeinterval = 10, trim = 10)
+lr2 <- distance_from_cp(model = 123, maxcp = 10, timeinterval = 10, trim = 10)
 
 models = c(1,2,3,4,5)
 maxcps = c(1,3,5,10,20)
@@ -96,11 +84,41 @@ output <- as_tibble(do.call(rbind,
                   mapply(distance_from_cp, FullGrid$models, FullGrid$maxcps, 
                          FullGrid$timeintervals, FullGrid$trims, 
                          SIMPLIFY=FALSE)))
-  
-write_csv(output, "app/output/time_diff_mod4.csv")
 
+
+outputsum <- output %>%
+  group_by(model, trim, timeinterval, session_id) %>%
+  arrange( .by_group = TRUE) %>%
+  mutate(bf = (mlik) / (lag(mlik)),
+         bflog = exp(mlik) / exp(first(mlik)),
+         k = maxcp *2,
+         adj_r2 = 1 - (((1 - R2) * (n - 1)) / (n - k - 1))) %>%
+  group_by(timeinterval, trim, model, maxcp) %>%
+  summarize(
+    rev_present = sum(rev_present == 1, na.rm = T),
+    correct_cp = sum(correct_cp, na.rm = T),
+    close_cp = sum(close_cp, na.rm = T),
+    cp_in_ci = sum(cp_in_ci, na.rm = T),
+    median_diff = median(diff, na.rm = T),
+    mean_diff = mean(diff, na.rm = T),
+    sd_diff = sd(diff, na.rm = T),
+    mean_r2 = mean(R2, na.rm = T),
+    sd_r2 = sd(R2,na.rm = T),
+    mean_adjr2 = mean(adj_r2, na.rm = T),
+    sd_adjr2 = sd(adj_r2,na.rm = T),
+    mean_rmse = mean(RMSE, na.rm = T),
+    sd_rmse = sd(RMSE,na.rm = T),
+    mean_bf = mean(bf, na.rm = T),
+    sd_bf = sd(bf, na.rm = T),
+    mean_mlik = mean(mlik, na.rm = T),
+    sd_mlik = sd(mlik, na.rm = T)
+  ) 
+  
+write_csv(outputsum, "app/output/time_diff_mod4.csv")
+
+###############################################################################
 ## plot outcomes for timeinterval 5, trim = 0
-output  %>%
+outputsum  %>%
   filter(timeinterval == 5, trim == 0, ) %>%
   pivot_longer(cols = c("correct_cp", "close_cp")) %>%
   mutate( percent = value / 138,
@@ -128,9 +146,10 @@ output  %>%
   ylab("Change points (correct / within 10s)") +
   xlab("Maximum number of change points") 
 
+################################################################################
 
-# run for univariate & Multivariate models (cannot output RMSE/R2)
-models = c(1,2,3,4,5, 123,12345)
+# run for Multivariate models (cannot output RMSE/R2/mlik)
+models = c(123,12345)
 maxcps = c(1,3,5,10,20)
 timeintervals = c(1,5,10)
 trims = c(0,10)
@@ -144,9 +163,25 @@ output <- as_tibble(do.call(rbind,
                                    FullGrid$timeintervals, FullGrid$trims, 
                                    SIMPLIFY=FALSE)))
 
-write_csv(output, "app/output/time_diff_mod4mv.csv")
+outputsummv <- output %>%
+  group_by(model, trim, timeinterval, session_id) %>%
+  group_by(timeinterval, trim, model, maxcp) %>%
+  summarize(
+    rev_present = sum(rev_present == 1, na.rm = T),
+    correct_cp = sum(correct_cp, na.rm = T),
+    close_cp = sum(close_cp, na.rm = T),
+    cp_in_ci = sum(cp_in_ci, na.rm = T),
+    median_diff = median(diff, na.rm = T),
+    mean_diff = mean(diff, na.rm = T),
+    sd_diff = sd(diff, na.rm = T),
+  ) 
 
+write_csv(outputsummv, "app/output/time_diff_mod4mv.csv")
 
+# combine all outcomes in one
+outputsumall <- outputsum %>% rbind(outputsummv)
+
+write_csv(outputsumall, "app/output/time_diff_mod4all.csv")
 
 
 ################################################################################
