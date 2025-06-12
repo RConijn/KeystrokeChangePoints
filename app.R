@@ -9,11 +9,11 @@ library(ggdist)
 theme_set(theme_ggdist())
 
 # get data
-models = c("1", "2", "3", "4", "5", "123", "12345")
+models = c("1", "2", "3", "4", "5", "123")
 log_filt2 <- read_csv("input/log_filt2.csv", show_col_types = FALSE)
 
 # load author names
-source("initialize_anom.R")
+source("initialize.R")
 
 # Define UI for the application
 ui <- 
@@ -135,9 +135,7 @@ server <- function(input, output, session) {
                                show_col_types = FALSE)
     beast_pick <- read_csv("output/beast_pick.csv", show_col_types = FALSE)
     
-    plot_final_breakpoint(log_filt2, subsetsessions = subsetsessions,
-                          beast_123_pick = beast_123_pick,
-                          beast_pick = beast_pick)
+    plot_final_breakpoint(log_filt2, subsetsessions = subsetsessions)
   })
 }
 

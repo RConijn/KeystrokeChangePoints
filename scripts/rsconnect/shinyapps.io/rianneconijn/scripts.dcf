@@ -1,0 +1,13 @@
+name: scripts
+title: scripts
+username: rianneconijn
+account: rianneconijn
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10868001
+bundleId: 8108416
+url: https://rianneconijn.shinyapps.io/scripts/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: AnomalyDetection-LIFT.R|arima-fable.R|ARIMA-LIFT.R|ARIMA-testmodel.R|create_input_tables.R|jens-approach.R|lift-arima-fable.R|lift-arima-fable2.R|lift_arima-ts.R|lift_clean.R|mcp.R|Muggeo-source-segmented.lme.r|new_segmented.R|plantra-binary.R|plantra_clean.R|rbeast_test.R|rbeast2.R|rbeast2_ml.R|rbeast3.R|RevisionAnalysis-LIFT.R|sdar.R|segmented.lm1.R|segmented.R|segmented2 (conflicted copy 2023-09-11 093536).R|segmented2.R|segmented3.R|selgmented1.R|setup/anonymizeLIFT.R|setup/combineXMLfiles.R
